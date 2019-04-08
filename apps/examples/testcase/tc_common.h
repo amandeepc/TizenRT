@@ -21,6 +21,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <time.h>
+#include <tinyara/time.h>
+#include <sys/time.h>
+
+
+#define NUM_LOOPS	1000000
 
 enum tc_op_type_e {
 	TC_START,
@@ -147,6 +153,29 @@ extern int total_fail;
 		free(buffer); \
 		buffer = NULL; \
 	} \
+}
+
+/*
+ * tc_performance : variadic macro for time measurements for function calls
+ *
+ * Args -
+ * fun : function
+ * sc_no : Number of arguments for function
+ * args : variable number of arguments to be passed to function
+ *
+ */
+#define tc_performance(fun, sc_no, args...) \
+{ \
+	int i = 0, pass = 0; \
+	struct timespec stime; \
+	struct timespec etime; \
+	clock_gettime(CLOCK_MONOTONIC, &stime); \
+	for (i = 0; i < NUM_LOOPS; i++) { \
+		fun(args); \
+		pass++; \
+	} \
+	clock_gettime(CLOCK_MONOTONIC, &etime); \
+	printf("%s - sys_call%s - [pass = %d] - stime (%lld.%09ld) - etime ((%lld.%09ld))\n", #fun, #sc_no, pass, (long long)stime.tv_sec, stime.tv_nsec, (long long)etime.tv_sec, etime.tv_nsec); \
 }
 
 #ifdef __cplusplus
